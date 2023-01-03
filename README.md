@@ -5,9 +5,9 @@
 
 **DEADLINES**
 
-**Part 1 due: Monday, April 4th 11:00PM**
+**Part 1 due: Monday, January 9th 11:59PM**
 
-**Due: Wednesday, April 13th 11:00 PM**
+**Due: Wednesday, January 18th 11:59PM**
 
 **IMPORTANT**: Part 1 should take about 1 hour (if all goes well) and it's mostly just there to make sure you get set up with the lab early. Part 2 requires a significant amount of time... really significant! It requires reading the code that we provide, figuring out how everything should work together, and then writing quite a bit of code yourself.
 
@@ -46,7 +46,7 @@ If you are using Eclipse or IntelliJ, many versions come with git already config
 
 #### 1.1.2\. Cloning your SimpleDB repository
 
-We've created a GitLab repository that you will use to implement SimpleDB. This repository is hosted on the [CSE GitLab](https://gitlab.cs.washington.edu) site, and you can view it by visiting the GitLab website at `https://gitlab.cs.washington.edu/cse444-22sp/simple-db-[your GitLab username]`. You'll be using this **same repository** for each of the labs this quarter, so if you don't see this repository or are unable to access it, let us know immediately!
+We've created a GitLab repository that you will use to implement SimpleDB. This repository is hosted on the [CSE GitLab](https://gitlab.cs.washington.edu) site, and you can view it by visiting the GitLab website at `https://gitlab.cs.washington.edu/cse444-23wi/simple-db-[your GitLab username]`. You'll be using this **same repository** for each of the labs this quarter, so if you don't see this repository or are unable to access it, let us know immediately!
 
 The first thing you'll need to do is set up a SSH key to allow communication with GitLab:
 
@@ -59,7 +59,7 @@ While you're logged into the GitLab website, browse around to see which projects
 We next want to move the code from the GitLab repository onto your local file system. To do this, you'll need to clone the lab repository by issuing the following commands on the command line:
 
 ```sh
-$ git clone git@gitlab.cs.washington.edu:cse444-22sp/simple-db-MY_GITLAB_USERNAME.git
+$ git clone git@gitlab.cs.washington.edu:cse444-23wi/simple-db-MY_GITLAB_USERNAME.git
 $ cd simple-db-MY_GITLAB_USERNAME
 ```
 
@@ -91,17 +91,17 @@ In order to be able to pull the changes from the upstream repository, we'll need
 
 ```sh
 $ # Note that this repository does not have your username as a suffix!
-$ git remote add upstream git@gitlab.cs.washington.edu:cse444-22sp/simple-db.git
+$ git remote add upstream git@gitlab.cs.washington.edu:cse444-23wi/simple-db.git
 ```
 
 For reference, your final remote configuration should read like the following when it's setup correctly:
 
 ```sh
 $ git remote -v
-  origin  git@gitlab.cs.washington.edu:cse444-22sp/simple-db-username.git (fetch)
-  origin  git@gitlab.cs.washington.edu:cse444-22sp/simple-db-username.git (push)
-  upstream    git@gitlab.cs.washington.edu:cse444-22sp/simple-db.git (fetch)
-  upstream    git@gitlab.cs.washington.edu:cse444-22sp/simple-db.git (push)
+  origin  git@gitlab.cs.washington.edu:cse444-23wi/simple-db-username.git (fetch)
+  origin  git@gitlab.cs.washington.edu:cse444-23wi/simple-db-username.git (push)
+  upstream    git@gitlab.cs.washington.edu:cse444-23wi/simple-db.git (fetch)
+  upstream    git@gitlab.cs.washington.edu:cse444-23wi/simple-db.git (push)
 ```
 
 In this configuration, the `origin` (default) remote links to **your** repository where you'll be pushing your individual submission. The `upstream` remote points to **our** repository where you'll be pulling subsequent labs and bug fixes (more on this below).
@@ -125,7 +125,7 @@ Delta compression using up to 4 threads.
 Compressing objects: 100% (2/2), done.
 Writing objects: 100% (3/3), 286 bytes | 0 bytes/s, done.
 Total 3 (delta 1), reused 0 (delta 0)
-To git@gitlab.cs.washington.edu:cse444-22sp/simple-db-username.git
+To git@gitlab.cs.washington.edu:cse444-23wi/simple-db-username.git
    cb5be61..9bbce8d  master -> master
 ```
 
@@ -152,7 +152,7 @@ remote: Counting objects: 3, done.
 remote: Compressing objects: 100% (3/3), done.
 remote: Total 3 (delta 2), reused 0 (delta 0)
 Unpacking objects: 100% (3/3), done.
-From gitlab.cs.washington.edu:cse444-22sp/simple-db
+From gitlab.cs.washington.edu:cse444-23wi/simple-db
  * branch            master     -> FETCH_HEAD
    7f81148..b0c4a3e  master     -> upstream/master
 Merge made by the 'recursive' strategy.
@@ -412,7 +412,7 @@ and will be graded all-or-nothing. We will NOT run any of the unit
 tests. We will just visually inspect that you submitted something
 reasonably complete.
 
-After executing the `turnInLab.sh` script, make sure to check your repository on GitLab to ensure that the tag has been property applied!  You may do this by visiting `https://gitlab.cs.washington.edu/cse444-22sp/simple-db-YOUR_USERNAME/tags`.
+After executing the `turnInLab.sh` script, make sure to check your repository on GitLab to ensure that the tag has been property applied!  You may do this by visiting `https://gitlab.cs.washington.edu/cse444-23wi/simple-db-YOUR_USERNAME/tags`.
 
 ### 2.3\. Catalog
 
@@ -603,7 +603,7 @@ Lab 1.
 
 ### 3.1\. Collaboration
 
-All CSE 444 labs are to be completed **INDIVIDUALLY**! However, you may discuss your high-level approach to solving each lab with other students in the class.
+All CSE 444 labs are to be completed **INDIVIDUALLY** or with **ONE PARTNER**! However, you may discuss your high-level approach to solving each lab with other students in the class.
 
 ### 3.2\. Submitting your assignment
 
@@ -614,6 +614,11 @@ You may submit your code multiple times; we will use the latest version you subm
 ```sh
 $ git add lab1-answers.txt
 ```
+or
+```sh
+$ git add lab1-answers.pdf
+```
+as appropriate
 
 You also need to explicitly add any other files you create, such as new `*.java` files.
 
@@ -634,19 +639,19 @@ $ ./turnInLab.sh lab1
 [main b155ba0] Lab 1
  1 file changed, 1 insertion(+)
 Deleted tag 'lab1' (was b26abd0)
-To git@gitlab.com:cse444-22sp/hw-answers-pirateninja.git
+To git@gitlab.com:cse444-23wi/hw-answers-pirateninja.git
  - [deleted]         lab1
 Counting objects: 11, done.
 Delta compression using up to 4 threads.
 Compressing objects: 100% (4/4), done.
 Writing objects: 100% (6/6), 448 bytes | 0 bytes/s, done.
 Total 6 (delta 3), reused 0 (delta 0)
-To git@gitlab.com:cse444-22sp/hw-answers-pirateninja.git
+To git@gitlab.com:cse444-23wi/hw-answers-pirateninja.git
    ae31bce..b155ba0  master -> master
 Counting objects: 1, done.
 Writing objects: 100% (1/1), 152 bytes | 0 bytes/s, done.
 Total 1 (delta 0), reused 0 (delta 0)
-To git@gitlab.com:cse444-22sp/hw-answers-pirateninja.git
+To git@gitlab.com:cse444-23wi/hw-answers-pirateninja.git
  * [new tag]         lab1 -> lab1
 ```
 
@@ -657,7 +662,7 @@ Git is a distributed version control system. This means everything operates offl
 The bad thing is that you may **forget to `git push` your changes**. This is why we strongly, strongly suggest that you **check GitLab to be sure that what you want us to see matches up with what you expect**.  As a second sanity check, you can re-clone your repository in a different directory to confirm the changes:
 
 ```sh
-$ git clone git@gitlab.cs.washington.edu:cse444-22sp/simple-db-username.git confirmation_directory
+$ git clone git@gitlab.cs.washington.edu:cse444-23wi/simple-db-username.git confirmation_directory
 $ cd confirmation_directory
 $ # ... make sure everything is as you expect ...
 ```
