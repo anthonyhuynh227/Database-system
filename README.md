@@ -44,9 +44,13 @@ Git may already be installed in your environment; if it's not, you'll need to in
 
 If you are using Eclipse or IntelliJ, many versions come with git already configured. The instructions will be slightly different than the command line instructions listed but will work for any OS. For Eclipse, detailed instructions can be found at [EGit User Guide](http://wiki.eclipse.org/EGit/User_Guide) or [EGit Tutorial](http://eclipsesource.com/blogs/tutorials/egit-tutorial).
 
-#### 1.1.2\. Cloning your SimpleDB repository
+#### 1.1.2\. Initializing your SimpleDB repository
 
-We've created a GitLab repository that you will use to implement SimpleDB. This repository is hosted on the [CSE GitLab](https://gitlab.cs.washington.edu) site, and you can view it by visiting the GitLab website at `https://gitlab.cs.washington.edu/cse444-23wi/simple-db-[your GitLab username]`. You'll be using this **same repository** for each of the labs this quarter, so if you don't see this repository or are unable to access it, let us know immediately!
+We've created a GitLab project that you will use to implement SimpleDB. This repository is hosted on the [CSE GitLab](https://gitlab.cs.washington.edu) site, and you can view it by visiting the GitLab website at `https://gitlab.cs.washington.edu/cse444-23wi/simple-db-[your GitLab username]`.
+
+**Go ahead and click "Create empty repository".**
+
+You'll be using the **same project** for each of the labs this quarter, so if you don't see this project or are unable to access it, let us know immediately!
 
 The first thing you'll need to do is set up a SSH key to allow communication with GitLab:
 
@@ -54,16 +58,16 @@ The first thing you'll need to do is set up a SSH key to allow communication wit
 2.  Visit the [GitLab SSH key management page](https://gitlab.cs.washington.edu/profile/keys). You'll need to log in using your CSE account.
 3.  Click "Add SSH Key" and paste in your **public** key into the text area.
 
-While you're logged into the GitLab website, browse around to see which projects you have access to. You should have access to `simple-db-[your username]`. Spend a few minutes getting familiar with the directory layout and file structure.
+While you're logged into the GitLab website, browse around to see which projects you have access to. You should have access to `simple-db-[your username]`.
 
-We next want to move the code from the GitLab repository onto your local file system. To do this, you'll need to clone the lab repository by issuing the following commands on the command line:
+We next want to get the GitLab repository onto your local file system. To do this, you'll need to clone the lab repository by issuing the following commands on the command line:
 
 ```sh
 $ git clone git@gitlab.cs.washington.edu:cse444-23wi/simple-db-MY_GITLAB_USERNAME.git
 $ cd simple-db-MY_GITLAB_USERNAME
 ```
 
-This will make a complete replica of the lab repository locally. If you get an error that looks like:
+This will make a replica of the lab repository locally. If you get an error that looks like:
 
 ```sh
 Cloning into 'simple-db-myusername'...
@@ -73,26 +77,29 @@ fatal: Could not read from remote repository.
 
 ... then there is a problem with your GitLab configuration. Check to make sure that your GitLab username matches the repository suffix, that your private key is in your SSH directory (`~/.ssh`) and has the correct permissions, and that you can view the repository through the website.
 
-Cloning will make a complete replica of the lab repository locally. Any time you `commit` and `push` your local changes, they will appear in the GitLab repository.  Since we'll be grading the copy in the GitLab repository, it's important that you remember to push all of your changes!
+Once you clone the empty reposity onto your machine you'll run a couple of commands to get the actual files (and upload it!):
+
+```sh
+$ git remote add upstream git@gitlab.cs.washington.edu:cse444-23wi/simple-db.git
+$ git pull upstream master
+$ git push
+```
+
+Spend a few minutes getting familiar with the directory layout and file structure.
+
+Any time you `commit` and `push` your local changes, they will appear in the GitLab repository.  Since we'll be grading the copy in the GitLab repository, it's important that you remember to push all of your changes!
 
 #### 1.1.3\. Adding an upstream remote
 
-The repository you just cloned is a replica of your own private repository on GitLab.  The copy on your file system is a local copy, and the copy on GitLab is referred to as the `origin` remote copy.  You can view a list of these remote links as follows:
+The copy on your file system is a local copy, and the copy on GitLab is referred to as the `origin` remote copy.  You can view a list of these remote links as follows:
 
 ```sh
 $ git remote -v
 ```
 
 There is one more level of indirection to consider.
-When we created your `simple-db-yourusername` repository, we forked a copy of it from another repository `simple-db`.  In `git` parlance, this "original repository" is referred to as an `upstream` repository.
+When we initialized your `simple-db-yourusername` repository in the step before, we forked a copy of another repository `simple-db`.  In `git` parlance, this "original repository" is referred to as an `upstream` repository.
 When we release bug fixes and subsequent labs, we will put our changes into the upstream repository, and you will need to be able to pull those changes into your own.  See [the documentation](https://git-scm.com/book/en/v2/Git-Basics-Working-with-Remotes) for more details on working with remotes -- they can be confusing!
-
-In order to be able to pull the changes from the upstream repository, we'll need to record a link to the `upstream` remote in your own local repository:
-
-```sh
-$ # Note that this repository does not have your username as a suffix!
-$ git remote add upstream git@gitlab.cs.washington.edu:cse444-23wi/simple-db.git
-```
 
 For reference, your final remote configuration should read like the following when it's setup correctly:
 
