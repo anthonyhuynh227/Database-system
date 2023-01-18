@@ -67,8 +67,7 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         // some code goes here
-        return 0;
-
+        return (int) Math.floor((BufferPool.getPageSize() * 8) / (this.td.getSize() * 8 + 1));
     }
 
     /**
@@ -78,7 +77,7 @@ public class HeapPage implements Page {
     private int getHeaderSize() {        
         
         // some code goes here
-        return 0;
+        return (int) Math.ceil(this.numSlots / 8.0);
                  
     }
     
@@ -112,7 +111,7 @@ public class HeapPage implements Page {
      */
     public HeapPageId getId() {
     // some code goes here
-    throw new UnsupportedOperationException("implement this");
+        return this.pid;
     }
 
     /**
@@ -282,7 +281,23 @@ public class HeapPage implements Page {
      */
     public int getNumEmptySlots() {
         // some code goes here
-        return 0;
+        int count = 0;
+        int pos = 0;
+        for (byte i : header) {
+            if (pos >= this.numSlots) {
+                break;
+            }
+            for (int j = 0; j <= 7; j++) {
+                if (pos >= this.numSlots) {
+                    break;
+                }
+                if (((i >> j) & 1 ) == 0) {
+                    count++;
+                }
+                pos++;
+            }
+        }
+        return count;
     }
 
     /**
@@ -290,6 +305,17 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
+        int pos = 0;
+        for (byte by : header) {
+            for (int j = 0; j <= 7; j++) {
+                if (pos == i && ((by >> j) & 1 ) == 1) {
+                    return true;
+                } else if (pos == i && ((by >> j) & 1 ) == 0) {
+                    return false;
+                }
+                pos++;
+            }
+        }
         return false;
     }
 
@@ -307,7 +333,16 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         // some code goes here
-        return null;
+        int size = this.numSlots - this.getNumEmptySlots();
+        Tuple[] iteratorTuple = new Tuple[size];
+        int j = 0;
+        for (int i = 0; i < tuples.length; i ++) {
+            if (this.isSlotUsed(i)) {
+                iteratorTuple[j] = this.tuples[i];
+                j++;
+            }
+        }
+        return Arrays.stream(iteratorTuple).iterator();
     }
 
 }
