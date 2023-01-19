@@ -26,7 +26,7 @@ public class BufferPool {
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
 
-    public HashMap<PageId, Page> setofPages;
+    public ConcurrentHashMap<PageId, Page> setofPages;
     public int capacity;
 
     /**
@@ -36,7 +36,7 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         // some code goes here
-        this.setofPages = new HashMap<>();
+        this.setofPages = new ConcurrentHashMap<>();
         this.capacity = numPages;
     }
     
@@ -77,7 +77,7 @@ public class BufferPool {
         }
 
         // checks whether this page is present in BufferPoll
-        if (setofPages.keySet().contains(pid)) {
+        if (setofPages.keySet().contains(pid) && setofPages.get(pid) != null) {
             return setofPages.get(pid);
         }
 
@@ -85,7 +85,9 @@ public class BufferPool {
         int tableId = pid.getTableId();
 
         // Add the page the BufferPool and return
-        return setofPages.put(pid, Database.getCatalog().idToFile.get(tableId).readPage(pid));
+        Page page = Database.getCatalog().idToFile.get(tableId).readPage(pid);
+        setofPages.put(pid, page);
+        return page;
     }
 
     /**

@@ -15,6 +15,7 @@ public class Tuple implements Serializable {
     private static final long serialVersionUID = 1L;
     private TupleDesc tupleDesc;
     private ArrayList<Field> arrField;
+    private RecordId recordId;
     /**
      * Create a new tuple with the specified schema (type).
      *
@@ -26,6 +27,7 @@ public class Tuple implements Serializable {
         // some code goes here
         this.tupleDesc = td;
         this.arrField = new ArrayList<>();
+        this.recordId = null;
     }
 
     /**
@@ -42,8 +44,7 @@ public class Tuple implements Serializable {
      */
     public RecordId getRecordId() {
         // some code goes here
-        
-        return null;
+        return this.recordId;
     }
 
     /**
@@ -54,7 +55,7 @@ public class Tuple implements Serializable {
      */
     public void setRecordId(RecordId rid) {
         // some code goes here
-
+        this.recordId = rid;
     }
 
     /**
