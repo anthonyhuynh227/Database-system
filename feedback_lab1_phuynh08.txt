@@ -1,0 +1,14 @@
+Feedback for: phuynh08
+--------------------------------------------------------------
+Total Score (%): 98
+Unit Test Score (out of 32): 32
+System Test Score (out of 4): 4
+Code Score (out of 10): 8
+Writeup Score (out of 10): 10
+--------------------------------------------------------------
+Code style: -2
+(-1): You didn't implement toString() in Tuple.java. 
+(-1): For getPage() in BufferPool, you should check whther the requested page is in the buffer pool before checking whether the buffer pool is full. If the buffer pool is full but the page is already in memory, you can simply return the page rather than throwing an error or evicting any pages (in future labs). 
+(-0): in Catalog.java, you could also consolidate the three hash maps into one by creating a class that stores associated table information together. You could also create another hashmap that maps from table name to table id, then you don't need to go through a for loop in getTableId(). 
+Writeup: -0
+Nice writeup that demonstrateds your understanding of the various components of simpledb. For future writeups, you should separate your descriptions of overall functionality and your design decisions more explicitly. 
