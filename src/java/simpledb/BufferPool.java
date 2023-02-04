@@ -2,6 +2,7 @@ package simpledb;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -71,14 +72,15 @@ public class BufferPool {
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-        // some code goes here
-        if (setofPages.size() >= capacity ) {
-            throw new DbException("Buffer is full");
-        }
-
+        
         // checks whether this page is present in BufferPoll
         if (setofPages.keySet().contains(pid) && setofPages.get(pid) != null) {
             return setofPages.get(pid);
+        }
+
+        // some code goes here
+        if (setofPages.size() >= capacity ) {
+            throw new DbException("Buffer is full");
         }
 
         // Gets the tableID contains this page
@@ -153,6 +155,18 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+        // Get the HeapFile from tableId
+        HeapFile hf = (HeapFile) Database.getCatalog().idToFile.get(tableId);
+        
+        // Insert tuple t into this hf file.
+        ArrayList<Page> li = hf.insertTuple(tid, t);
+        for (Page page : li) {
+            page.markDirty(true, tid);
+
+            // replace this dirty page in Buffer Poll
+            setofPages.put(page.getId(), page);
+        }
+
     }
 
     /**
@@ -172,6 +186,20 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+        // retrive the file base on info from tuple t
+        int tableId =  t.getRecordId().getPageId().getTableId();
+        HeapFile hf = (HeapFile) Database.getCatalog().idToFile.get(tableId);
+
+        // delete the tuple from the hf file
+        ArrayList<Page> li = hf.deleteTuple(tid, t);
+        // Mark it dirty and replace it in Buffer Pool
+        for (Page page : li) {
+            page.markDirty(true, tid);
+
+            // replace this dirty page in Buffer Poll
+            setofPages.put(page.getId(), page);
+        }
+        
     }
 
     /**
