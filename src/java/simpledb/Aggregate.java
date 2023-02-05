@@ -3,6 +3,8 @@ package simpledb;
 import java.util.*;
 
 /**
+ * Name: Ivan Belikov and Phuoc Huynh
+ * StudentID: Ivanb13 and phuynh08
  * The Aggregation operator that computes an aggregate (e.g., sum, avg, max,
  * min). Note that we only support aggregates over a single column, grouped by a
  * single column.
@@ -37,29 +39,28 @@ public class Aggregate extends Operator {
      *            The aggregation operator to use
      */
     public Aggregate(OpIterator child, int afield, int gfield, Aggregator.Op aop) {
-	// some code goes here
-        this.childIter = child;
-    	this.afield = afield;
-    	this.gfield = gfield;
-    	this.aop = aop;
-    	TupleDesc childTD = childIter.getTupleDesc();
-    	Type typeAField = childTD.getFieldType(afield);
-    	Type typeGField;
-    	String nameGField;
-    	if(gfield != -1) {
-    		typeGField = childTD.getFieldType(gfield);
-    		nameGField = childTD.getFieldName(gfield);
-    		this.tupleDesc = new TupleDesc(new Type[] {typeGField, Type.INT_TYPE}, new String[] {nameGField, aop.toString() + " " + childTD.getFieldName(afield)});
-    	} else {
-    		typeGField = null;
-    		nameGField = null;
-    		this.tupleDesc = new TupleDesc(new Type[] {Type.INT_TYPE}, new String[] {aop.toString() + " " + childTD.getFieldName(afield)});
-    	}
-    	if(typeAField == Type.STRING_TYPE) {
-    		this.agg = new StringAggregator(gfield, typeGField, afield, aop);
-    	} else {
-    	    this.agg = new IntegerAggregator(gfield, typeGField, afield, aop);
-    	}
+    	 this.childIter = child;
+    	 this.afield = afield;
+    	 this.gfield = gfield;
+    	 this.aop = aop;
+    	 TupleDesc childTD = childIter.getTupleDesc();
+    	 Type typeAField = childTD.getFieldType(afield);
+    	 Type typeGField;
+    	 String nameGField;
+    	 if(gfield != -1) {
+    		 typeGField = childTD.getFieldType(gfield);
+    		 nameGField = childTD.getFieldName(gfield);
+    		 this.tupleDesc = new TupleDesc(new Type[] {typeGField, Type.INT_TYPE}, new String[] {nameGField, aop.toString() + " " + childTD.getFieldName(afield)});
+    	 } else {
+    		 typeGField = null;
+    		 nameGField = null;
+    		 this.tupleDesc = new TupleDesc(new Type[] {Type.INT_TYPE}, new String[] {aop.toString() + " " + childTD.getFieldName(afield)});
+    	 }
+    	 if(typeAField == Type.STRING_TYPE) {
+    		 this.agg = new StringAggregator(gfield, typeGField, afield, aop);
+    	 } else {
+    	      this.agg = new IntegerAggregator(gfield, typeGField, afield, aop);
+    	 }
     }
 
     /**
@@ -68,8 +69,7 @@ public class Aggregate extends Operator {
      *         {@link simpledb.Aggregator#NO_GROUPING}
      * */
     public int groupField() {
-	// some code goes here
-        return this.gfield;
+    	return this.gfield;
     }
 
     /**
@@ -78,20 +78,18 @@ public class Aggregate extends Operator {
      *         null;
      * */
     public String groupFieldName() {
-	// some code goes here
-        if(this.gfield != -1) {
-            return this.tupleDesc.getFieldName(0);
-        } else {
-            return null;
-        }
+    	if(this.gfield != -1) {
+    		return this.tupleDesc.getFieldName(0);
+    	} else {
+    		return null;
+    	}
     }
 
     /**
      * @return the aggregate field
      * */
     public int aggregateField() {
-	// some code goes here
-	    return this.afield;
+    	return this.afield;
     }
 
     /**
@@ -99,35 +97,33 @@ public class Aggregate extends Operator {
      *         tuples
      * */
     public String aggregateFieldName() {
-	// some code goes here
-        if(this.gfield != -1) {
-            return this.tupleDesc.getFieldName(1);
-        } else {
-            return this.tupleDesc.getFieldName(0);
-        }
+    	if(this.gfield != -1) {
+    		return this.tupleDesc.getFieldName(1);
+    	} else {
+    		return this.tupleDesc.getFieldName(0);
+    	}
     }
 
     /**
      * @return return the aggregate operator
      * */
     public Aggregator.Op aggregateOp() {
-	// some code goes here
-	    return this.aop;
+    	return this.aop;
     }
 
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
-	    return aop.toString();
+    	return aop.toString();
     }
 
     public void open() throws NoSuchElementException, DbException,
 	    TransactionAbortedException {
-	// some code goes here
-        while(childIter.hasNext()) {
-            agg.mergeTupleIntoGroup(childIter.next());
-        }
-        aggIter = agg.iterator();
-        aggIter.open();
-        super.open();
+    	childIter.open();
+    	while(childIter.hasNext()) {
+    		agg.mergeTupleIntoGroup(childIter.next());
+    	}
+    	aggIter = agg.iterator();
+    	aggIter.open();
+    	super.open();
     }
 
     /**
@@ -138,17 +134,15 @@ public class Aggregate extends Operator {
      * aggregate. Should return null if there are no more tuples.
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-	// some code goes here
-        if(aggIter.hasNext()) {
-            return aggIter.next();
-        } else {
-            return null;
-        }
+    	if(aggIter.hasNext()) {
+    		return aggIter.next();
+    	} else {
+    		return null;
+    	}
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-	// some code goes here
-        aggIter.rewind();
+    	aggIter.rewind();
     }
 
     /**
@@ -163,30 +157,27 @@ public class Aggregate extends Operator {
      * iterator.
      */
     public TupleDesc getTupleDesc() {
-	// some code goes here
-	    return this.tupleDesc;
+    	return this.tupleDesc;
     }
 
     public void close() {
-	// some code goes here
-        super.close();
-        aggIter.close();
-        childIter.close();
-        this.aggIter = null;
-        this.childIter = null;
+    	super.close();
+    	aggIter.close();
+    	childIter.close();
+    	this.aggIter = null;
+    	this.childIter = null;
     }
 
     @Override
     public OpIterator[] getChildren() {
-	// some code goes here
-	    return new OpIterator[] {this.childIter};
+    	return new OpIterator[] {this.childIter};
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
-	// some code goes here
-        if(this.childIter != children[0]) {
-            this.childIter = children[0];
-        }
+    	if(this.childIter != children[0]) {
+    		this.childIter = children[0];
+    	}
     }
+    
 }
