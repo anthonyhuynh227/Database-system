@@ -2,7 +2,10 @@ package simpledb;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -29,6 +32,7 @@ public class BufferPool {
 
     public ConcurrentHashMap<PageId, Page> setofPages;
     public int capacity;
+    public Deque<PageId> deque;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -39,6 +43,7 @@ public class BufferPool {
         // some code goes here
         this.setofPages = new ConcurrentHashMap<>();
         this.capacity = numPages;
+        deque = new ArrayDeque<>();
     }
     
     public static int getPageSize() {
@@ -75,12 +80,15 @@ public class BufferPool {
         
         // checks whether this page is present in BufferPoll
         if (setofPages.keySet().contains(pid) && setofPages.get(pid) != null) {
+            // move to the front of the queue. Most recently used
+            deque.remove(pid);
+            deque.addLast(pid);
             return setofPages.get(pid);
         }
 
         // some code goes here
         if (setofPages.size() >= capacity ) {
-            throw new DbException("Buffer is full");
+            evictPage();
         }
 
         // Gets the tableID contains this page
@@ -89,6 +97,7 @@ public class BufferPool {
         // Add the page the BufferPool and return
         Page page = Database.getCatalog().idToFile.get(tableId).readPage(pid);
         setofPages.put(pid, page);
+        deque.addLast(pid);
         return page;
     }
 
@@ -210,7 +219,9 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for lab1
-
+        for (PageId pageId : setofPages.keySet()) {
+            flushPage(pageId);
+        }
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -233,6 +244,16 @@ public class BufferPool {
     private synchronized  void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for lab1
+        // Get the page from Pageid
+        HeapPage page = (HeapPage) setofPages.get(pid);
+
+        if (page == null) {
+            throw new IOException("The page is not in Buffer Pool");
+        }
+
+        // write this page to disk
+        Database.getCatalog().idToFile.get(pid.getTableId()).writePage(page);
+
     }
 
     /** Write all pages of the specified transaction to disk.
@@ -249,6 +270,16 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
+        Iterator<PageId> iter = deque.iterator();
+        while (iter.hasNext()) {
+            PageId pageId = iter.next();
+            // Get the first not dirty page
+            if (setofPages.get(pageId).isDirty() == null) {
+                deque.remove(pageId);
+                // remove from the Hash
+                setofPages.remove(pageId);
+            }    
+        }
     }
 
 }
