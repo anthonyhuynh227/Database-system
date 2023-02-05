@@ -1,5 +1,12 @@
 package simpledb;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+
+import simpledb.TupleDesc.TDItem;
+
+
 /**
  * Inserts tuples read from the child operator into the tableId specified in the
  * constructor
@@ -7,6 +14,15 @@ package simpledb;
 public class Insert extends Operator {
 
     private static final long serialVersionUID = 1L;
+
+    private TransactionId t;
+	private OpIterator child;
+	private int tableId;
+	private TupleDesc td;
+	private int insertCount;
+	private boolean read;
+
+    
 
     /**
      * Constructor.
@@ -24,23 +40,45 @@ public class Insert extends Operator {
     public Insert(TransactionId t, OpIterator child, int tableId)
             throws DbException {
         // some code goes here
+
+        this.t = t;
+        this.child = child;
+        this.tableId = tableId;
+        this.td = new TupleDesc(new Type[] {Type.INT_TYPE});
+        this.insertCount = 0;
+        this.read = false;
+
     }
 
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+        return this.td;
     }
 
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
+        this.child.open();
+    	try{
+    		while(this.child.hasNext()) {
+        		insertCount++;
+        		Database.getBufferPool().insertTuple(t, tableId, child.next());
+        	}
+    		super.open();	
+    	}catch(IOException e) {
+    		e.printStackTrace();
+    	}
+
     }
 
     public void close() {
         // some code goes here
+        child.close();
+        super.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
         // some code goes here
+        read = false;
     }
 
     /**
@@ -58,17 +96,31 @@ public class Insert extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        if(read) {
+    		return null;
+    	}
+    	IntField tupleNum = new IntField(insertCount);
+    	Type[] type = {tupleNum.getType()};
+    	String[] field = {"Inserted Tuple Count"};
+    	TupleDesc desc = new TupleDesc(type, field);
+    	Tuple result = new Tuple(desc);
+    	result.setField(0, tupleNum);
+    
+    	read = true;
+    	return result;
+
     }
 
     @Override
     public OpIterator[] getChildren() {
         // some code goes here
-        return null;
+        return new OpIterator[] {this.child};
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
         // some code goes here
+        assert children.length == 1;
+        this.child = children[0];
     }
 }
