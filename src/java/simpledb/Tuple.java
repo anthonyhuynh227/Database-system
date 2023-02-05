@@ -97,7 +97,12 @@ public class Tuple implements Serializable {
      */
     public String toString() {
         // some code goes here
-        throw new UnsupportedOperationException("Implement this");
+        StringBuilder str = new StringBuilder();
+        for (int i = 0; i < tupleDesc.numFields(); i++) {
+            str.append(arrField.get(i).toString());
+            str.append(" ");
+        }
+        return str.toString();
     }
 
     /**

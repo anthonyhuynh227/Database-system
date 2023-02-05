@@ -177,6 +177,7 @@ public class HeapFile implements DbFile {
                     throws DbException, TransactionAbortedException {
             if (pageNum < 0 || pageNum >= numPages()) {
                 return null;
+                //throw new DbException("No Page");
             }
             return (HeapPage) Database.getBufferPool().getPage(tid, pageId, this.perm);
         }

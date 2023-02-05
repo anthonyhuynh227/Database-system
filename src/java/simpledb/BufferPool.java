@@ -279,7 +279,11 @@ public class BufferPool {
                 deque.remove(pageId);
                 // remove from the Hash
                 setofPages.remove(pageId);
+                break;
             }    
+        }
+        if (setofPages.size() >= this.capacity) {
+            throw new DbException("Buffer Pool is full and can't be evict");
         }
     }
 
