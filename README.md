@@ -1,8 +1,5 @@
 # CSE444 Lab 3: SimpleDB Transactions
 
-#### Part 1 Due: Monday, May 9th
-#### Due: Monday, May 16th
-
 In this lab, you will implement a simple locking-based transaction system in SimpleDB. You will need to add lock and unlock calls at the appropriate places in your code, as well as code to track the locks held by each transaction and grant locks to transactions as they are needed.
 
 The remainder of this document describes what is involved in adding transaction support and provides a basic outline of how you might add this support to your database.
