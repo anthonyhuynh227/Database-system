@@ -58,15 +58,7 @@ public class Insert extends Operator {
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
         this.child.open();
-    	try{
-    		while(this.child.hasNext()) {
-        		insertCount++;
-        		Database.getBufferPool().insertTuple(t, tableId, child.next());
-        	}
-    		super.open();	
-    	}catch(IOException e) {
-    		e.printStackTrace();
-    	}
+    	super.open();
 
     }
 
@@ -98,6 +90,15 @@ public class Insert extends Operator {
         // some code goes here
         if(read) {
     		return null;
+    	} else {
+    		try{
+        		while(this.child.hasNext()) {
+            		insertCount++;
+            		Database.getBufferPool().insertTuple(t, tableId, child.next());
+            	}
+        	}catch(IOException e) {
+        		e.printStackTrace();
+        	}
     	}
     	IntField tupleNum = new IntField(insertCount);
     	Type[] type = {tupleNum.getType()};
