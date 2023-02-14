@@ -100,7 +100,7 @@ public class BufferPool {
 					return true;
 				} else {
 					if(!addToWaitList(exclusiveLocks.get(pid), tid)) {
-						throw new TransactionAbortedException();
+						//throw new TransactionAbortedException();
 					}
 					return false;
 				}
@@ -135,7 +135,7 @@ public class BufferPool {
 							return true;
 						} else {
 							if(!addToWaitList(readLocks.get(pid).iterator().next(), tid)) {
-								throw new TransactionAbortedException();
+								//throw new TransactionAbortedException();
 							}
 							return false;
 						}
