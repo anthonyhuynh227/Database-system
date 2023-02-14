@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ArrayDeque;
+import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,6 +21,179 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Threadsafe, all fields are final
  */
 public class BufferPool {
+	private static class LockManager {
+		private static HashMap<PageId, TransactionId> exclusiveLocks;
+		private static HashMap<PageId, HashSet<TransactionId>> readLocks;
+		private static HashMap<TransactionId, HashSet<TransactionId>> waitList;
+		
+		public LockManager() {
+			exclusiveLocks = new HashMap<>();
+			readLocks = new HashMap<>();
+			waitList = new HashMap<>();
+		}
+		
+		public synchronized boolean isDeadLock(TransactionId tid, PageId pid) {
+			if(exclusiveLocks.containsKey(pid) && !exclusiveLocks.get(pid).equals(tid)) {
+				if(waitList.containsKey(tid)) {
+					if(waitList.get(tid).contains(exclusiveLocks.get(pid))) {
+						// Dead locks exists because both transactions waiting
+						// for lock from the other and none release 
+						return true;
+					}
+				}
+				TransactionId tidWithLock = exclusiveLocks.get(pid);
+				if(waitList.containsKey(tidWithLock)) {
+					HashSet<TransactionId> waitingTransactions = waitList.get(tidWithLock);
+					waitingTransactions.add(tid);
+				}
+				waitList.put(tidWithLock, new HashSet<TransactionId>());
+			}
+			return false;
+		}
+		
+		public synchronized boolean isWaiting(TransactionId mainTrans, TransactionId waitTrans) {
+			if(waitList.containsKey(mainTrans)&& waitList.get(mainTrans).contains(waitTrans)) {
+				return true;
+			}
+			return false;
+		}
+		
+		public synchronized boolean addToWaitList(TransactionId mainTrans, TransactionId waitTrans) {
+			if(isWaiting(mainTrans, waitTrans)) {
+				return false;
+			}
+			if(!waitList.containsKey(mainTrans)) {
+				waitList.put(mainTrans, new HashSet<TransactionId>());
+			}
+			HashSet<TransactionId> waitingTids = waitList.get(mainTrans);
+			waitingTids.add(waitTrans);
+			return true;
+		}
+		
+		public synchronized void deletFromWaitList(TransactionId removeTrans) {
+			waitList.remove(removeTrans);
+			for(HashSet<TransactionId> waiting : waitList.values()) {
+				waiting.remove(removeTrans);
+			}
+		}
+		
+		public synchronized void releaseTransaction(TransactionId tid) {
+			for(PageId pid : exclusiveLocks.keySet()) {
+				if(exclusiveLocks.get(pid).equals(tid)) {
+					exclusiveLocks.remove(pid);
+				}
+			}
+			for(PageId pid : readLocks.keySet()) {
+				readLocks.get(pid).remove(tid);
+			}
+		}
+		
+		public synchronized boolean getReadLock(PageId pid, TransactionId tid) throws TransactionAbortedException{
+			if(exclusiveLocks.containsKey(pid)) {
+				if(tid.equals(exclusiveLocks.get(pid))) {
+					if(readLocks.containsKey(pid)) {
+						readLocks.get(pid).add(tid);
+					} else {
+						readLocks.put(pid, new HashSet<TransactionId>());
+						readLocks.get(pid).add(tid);
+					}
+					return true;
+				} else {
+					if(!addToWaitList(exclusiveLocks.get(pid), tid)) {
+						throw new TransactionAbortedException();
+					}
+					return false;
+				}
+			} else {
+				if(readLocks.containsKey(pid)) {
+					readLocks.get(pid).add(tid);
+				} else {
+					readLocks.put(pid, new HashSet<TransactionId>());
+					readLocks.get(pid).add(tid);
+				}
+				return true;
+			}
+		}
+		
+		public synchronized boolean getExclusiveLock(PageId pid, TransactionId tid) throws TransactionAbortedException{
+			if(exclusiveLocks.containsKey(pid) && !exclusiveLocks.get(pid).equals(tid)) {
+				if(addToWaitList(exclusiveLocks.get(pid), tid)) {
+					throw new TransactionAbortedException();
+				}
+				return false;
+			}
+			
+			if(readLocks.containsKey(pid)) {
+				HashSet<TransactionId> transactions = readLocks.get(pid);
+				if(transactions.size() != 0) {
+					if(transactions.size() == 1) {
+						if(transactions.contains(tid)) {
+							if(isDeadLock(tid, pid)) {
+								throw new TransactionAbortedException();
+							}
+							exclusiveLocks.put(pid, tid);
+							return true;
+						} else {
+							if(!addToWaitList(readLocks.get(pid).iterator().next(), tid)) {
+								throw new TransactionAbortedException();
+							}
+							return false;
+						}
+					} else {
+						Iterator<TransactionId> tidIter = readLocks.get(pid).iterator();
+						while(tidIter.hasNext()) {
+							if(!addToWaitList(tidIter.next(), tid)) {
+								throw new TransactionAbortedException();
+							}
+						}
+						return false;
+					}
+				} else {
+					if(isDeadLock(tid, pid)) {
+						throw new TransactionAbortedException();
+					}
+					exclusiveLocks.put(pid, tid);
+					return true;
+				}
+			} else {
+				if(isDeadLock(tid, pid)) {
+					throw new TransactionAbortedException();
+				}
+				exclusiveLocks.put(pid, tid);
+				return true;
+				
+			}
+		}
+		
+		public synchronized boolean removeReadLock(PageId pid, TransactionId tid) {
+			if(!readLocks.containsKey(pid)) {
+				return false;
+			}
+			return readLocks.get(pid).remove(tid);
+		}
+		
+		public synchronized boolean removeExclusiveLock(PageId pid, TransactionId tid) {
+			if(!exclusiveLocks.containsKey(pid)) {
+				return false;
+			} else {
+				if(exclusiveLocks.get(pid).equals(tid)) {
+					exclusiveLocks.remove(pid);
+					return true;
+				} else {
+					return false;
+				}
+			}
+		}
+		
+		public synchronized boolean hasReadLock(PageId pid, TransactionId tid) {
+			return readLocks.containsKey(pid) && readLocks.get(pid).contains(tid);
+		}
+		
+		public synchronized boolean hasExclusiveLock(PageId pid, TransactionId tid) {
+			return exclusiveLocks.containsKey(pid) && exclusiveLocks.get(pid).equals(tid);
+		}
+		
+	}
     /** Bytes per page, including header. */
     private static final int DEFAULT_PAGE_SIZE = 4096;
 
@@ -33,6 +207,7 @@ public class BufferPool {
     public ConcurrentHashMap<PageId, Page> setofPages;
     public int capacity;
     public Deque<PageId> deque;
+    LockManager lockManag;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -44,6 +219,7 @@ public class BufferPool {
         this.setofPages = new ConcurrentHashMap<>();
         this.capacity = numPages;
         deque = new ArrayDeque<>();
+        lockManag = new LockManager();
     }
     
     public static int getPageSize() {
@@ -77,7 +253,24 @@ public class BufferPool {
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-        
+    	
+    	boolean hasLock = false;
+    	while(!hasLock) {
+    		synchronized(this) {
+    			if(perm == Permissions.READ_WRITE) {
+    				hasLock = lockManag.getExclusiveLock(pid, tid);
+    			} else {
+    				hasLock = lockManag.getReadLock(pid, tid);
+    			}
+    		}
+    		if(!hasLock) {
+    			try {
+    				Thread.sleep(1);
+    			} catch (Exception e) {
+    				e.printStackTrace();
+    			}
+    		}
+    	}
         // checks whether this page is present in BufferPoll
         if (setofPages.keySet().contains(pid) && setofPages.get(pid) != null) {
             // move to the front of the queue. Most recently used
@@ -113,6 +306,8 @@ public class BufferPool {
     public  void releasePage(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for lab1|lab2
+    	lockManag.removeExclusiveLock(pid, tid);
+    	lockManag.removeReadLock(pid, tid);
     }
 
     /**
@@ -129,7 +324,7 @@ public class BufferPool {
     public boolean holdsLock(TransactionId tid, PageId p) {
         // some code goes here
         // not necessary for lab1|lab2
-        return false;
+        return lockManag.hasExclusiveLock(p, tid) || lockManag.hasReadLock(p, tid);
     }
 
     /**
@@ -277,7 +472,7 @@ public class BufferPool {
             // Get the first not dirty page
             if (setofPages.get(pageId).isDirty() == null) {
                 deque.remove(pageId);
-                // remove from the Buffer Pool
+                // remove from the Hash
                 setofPages.remove(pageId);
                 break;
             }    
