@@ -47,15 +47,7 @@ public class Delete extends Operator {
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
         this.child.open();
-    	try {
-        	while(this.child.hasNext()) {
-        		deleteCount++;
-        		Database.getBufferPool().deleteTuple(t, child.next());
-        	}
-    		super.open();
-    	}catch(IOException e) {
-    		e.printStackTrace();
-    	}
+    	super.open();
 
     }
 
@@ -83,6 +75,15 @@ public class Delete extends Operator {
         // some code goes here
         if(read) {
     		return null;
+    	} else {
+    		try {
+            	while(this.child.hasNext()) {
+            		deleteCount++;
+            		Database.getBufferPool().deleteTuple(t, child.next());
+            	}
+        	}catch(IOException e) {
+        		e.printStackTrace();
+        	}
     	}
     	IntField tupleNum = new IntField(this.deleteCount);
     	Type[] type = {tupleNum.getType()};

@@ -72,11 +72,13 @@ public class HeapFile implements DbFile {
         // some code goes here
         try {
             RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
-            randomAccessFile.seek(BufferPool.getPageSize() * pid.getPageNumber());
             byte[] data = new byte[BufferPool.getPageSize()];
-            randomAccessFile.read(data);
-            randomAccessFile.close();
-            return new HeapPage((HeapPageId)pid, data);
+            if(BufferPool.getPageSize() * pid.getPageNumber() < file.length()) {
+            	randomAccessFile.seek(BufferPool.getPageSize() * pid.getPageNumber());
+                randomAccessFile.read(data);
+                randomAccessFile.close();
+            }
+            return new HeapPage(new HeapPageId(pid.getTableId(), pid.getPageNumber()), data);
         } catch (IOException e) {
             e.printStackTrace();
         }
