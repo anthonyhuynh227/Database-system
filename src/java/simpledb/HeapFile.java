@@ -73,6 +73,14 @@ public class HeapFile implements DbFile {
         try {
             RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
             byte[] data = new byte[BufferPool.getPageSize()];
+<<<<<<< HEAD
+            if(BufferPool.getPageSize() * pid.getPageNumber() < file.length()) {
+            	randomAccessFile.seek(BufferPool.getPageSize() * pid.getPageNumber());
+                randomAccessFile.read(data);
+                randomAccessFile.close();
+            }
+            return new HeapPage(new HeapPageId(pid.getTableId(), pid.getPageNumber()), data);
+=======
             int pos = BufferPool.getPageSize() * pid.getPageNumber();
             if (pos < randomAccessFile.length()) {
                 randomAccessFile.seek(pos);
@@ -84,6 +92,7 @@ public class HeapFile implements DbFile {
             // to update the number of Page.
             writePage(page);
             return page;
+>>>>>>> 543232584c41538126ad7900e56cb2863570d10c
         } catch (IOException e) {
             e.printStackTrace();
         }
