@@ -73,12 +73,26 @@ public class HeapFile implements DbFile {
         try {
             RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
             byte[] data = new byte[BufferPool.getPageSize()];
+<<<<<<< HEAD
             if(BufferPool.getPageSize() * pid.getPageNumber() < file.length()) {
             	randomAccessFile.seek(BufferPool.getPageSize() * pid.getPageNumber());
                 randomAccessFile.read(data);
                 randomAccessFile.close();
             }
             return new HeapPage(new HeapPageId(pid.getTableId(), pid.getPageNumber()), data);
+=======
+            int pos = BufferPool.getPageSize() * pid.getPageNumber();
+            if (pos < randomAccessFile.length()) {
+                randomAccessFile.seek(pos);
+                randomAccessFile.read(data);
+                randomAccessFile.close();
+            }
+            HeapPage page = new HeapPage((HeapPageId)pid, data);
+            // Write this page back to file, in case the file is empty, we need to wirte it back
+            // to update the number of Page.
+            writePage(page);
+            return page;
+>>>>>>> 543232584c41538126ad7900e56cb2863570d10c
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -105,7 +119,7 @@ public class HeapFile implements DbFile {
      */
     public int numPages() {
         // some code goes here
-        return this.numPage ;
+        return ((int)file.length() + BufferPool.getPageSize() - 1) / BufferPool.getPageSize();
     }
 
     // see DbFile.java for javadocs
@@ -114,23 +128,21 @@ public class HeapFile implements DbFile {
         // some code goes here
         // not necessary for lab1
         ArrayList<Page> res = new ArrayList<Page>();
-        for (int i = 0; i < this.numPage; i++) {
+        for (int i = 0; i < this.numPages(); i++) {
             HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(this.getId(), i),
                     Permissions.READ_WRITE);
             
             if (page.getNumEmptySlots() > 0 ) {
-                
-                //System.out.println("YES");
+                //System.out.println("1");
                 page.insertTuple(t);
                 res.add(page);
                 return res;
             }
         }
         // If thers is no slot empty, allocate new Page
-        this.numPage = this.numPage + 1;
+        this.numPage = this.numPages() + 1;
         HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(this.getId(), this.numPage -1 ),
         Permissions.READ_WRITE);
-        //System.out.println("numpage" + this.numPages());
         page.insertTuple(t);
         res.add(page);
         return res;

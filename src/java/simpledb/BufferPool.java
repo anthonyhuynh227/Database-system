@@ -277,7 +277,7 @@ public class BufferPool {
             // Get the first not dirty page
             if (setofPages.get(pageId).isDirty() == null) {
                 deque.remove(pageId);
-                // remove from the Hash
+                // remove from the Buffer Pool
                 setofPages.remove(pageId);
                 break;
             }    
