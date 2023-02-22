@@ -38,12 +38,15 @@ public class BufferPoolWriteTest extends TestUtil.CreateHeapFile {
     			BufferedOutputStream bw = new BufferedOutputStream(new FileOutputStream(super.getFile(), true));
                 byte[] emptyData = HeapPage.createEmptyPageData();
                 bw.write(emptyData);
+				System.out.println("FILE size " + super.file.length());
                 bw.close();
+				System.out.println("HEAP PAGE" + super.numPages());
     			HeapPage p = new HeapPage(new HeapPageId(super.getId(), super.numPages() - 1), 
     					HeapPage.createEmptyPageData());
     	        p.insertTuple(t);
     			dirtypages.add(p);
     		}
+			System.out.println(dirtypages.size());
     		return dirtypages;
     	}
     }
@@ -124,7 +127,7 @@ public class BufferPoolWriteTest extends TestUtil.CreateHeapFile {
     	// there should now be 10 tuples (on 10 different pages) in the buffer pool
     	DbFileIterator it = hfd.iterator(tid);
     	it.open();
-    	System.out.println(hfd.numPages() + "numpages");
+    	//System.out.println(hfd.numPages() + "numpages");
     	int count = 0;
     	while(it.hasNext()) {
     		it.next();

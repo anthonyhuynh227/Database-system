@@ -2,6 +2,7 @@ package simpledb;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * HeapFile is an implementation of a DbFile that stores a collection of tuples
@@ -17,7 +18,7 @@ public class HeapFile implements DbFile {
 
     public File file;
     public TupleDesc tupleDesc;
-    public int numPage;
+    public AtomicInteger numPage;
 
     /**
      * Constructs a heap file backed by the specified file.
@@ -30,7 +31,7 @@ public class HeapFile implements DbFile {
         // some code goes here
         this.file = f;
         this.tupleDesc = td;
-        this.numPage = ((int)file.length() + BufferPool.getPageSize() - 1) / BufferPool.getPageSize();
+        this.numPage = new AtomicInteger(((int) file.length() + BufferPool.getPageSize() - 1) / BufferPool.getPageSize());
     }
 
     /**
@@ -70,19 +71,20 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
         // some code goes here
+        byte[] data = new byte[BufferPool.getPageSize()];
         try {
             RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
-            byte[] data = new byte[BufferPool.getPageSize()];
             int pos = BufferPool.getPageSize() * pid.getPageNumber();
             if (pos < randomAccessFile.length()) {
                 randomAccessFile.seek(pos);
                 randomAccessFile.read(data);
                 randomAccessFile.close();
             }
-            HeapPage page = new HeapPage((HeapPageId)pid, data);
+            HeapPage page = new HeapPage(new HeapPageId(pid.getTableId(), pid.getPageNumber()), data);
+            //System.out.println("readPage"  + pid.getPageNumber());
             // Write this page back to file, in case the file is empty, we need to wirte it back
             // to update the number of Page.
-            writePage(page);
+            //writePage(page);
             return page;
         } catch (IOException e) {
             e.printStackTrace();
@@ -99,7 +101,7 @@ public class HeapFile implements DbFile {
             randomAccessFile.seek(BufferPool.getPageSize() * page.getId().getPageNumber());
             randomAccessFile.write(page.getPageData());
             randomAccessFile.close();
-            this.numPage = ((int)file.length() + BufferPool.getPageSize() - 1) / BufferPool.getPageSize();
+            //this.numPage = ((int)file.length() + BufferPool.getPageSize() - 1) / BufferPool.getPageSize();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -110,7 +112,10 @@ public class HeapFile implements DbFile {
      */
     public int numPages() {
         // some code goes here
-        return ((int)file.length() + BufferPool.getPageSize() - 1) / BufferPool.getPageSize();
+        //System.out.println("file size: "  + this.file.length());
+        int res = ((int) file.length() + BufferPool.getPageSize() - 1) / BufferPool.getPageSize();
+        //return numPage.get();
+        return Math.max(res, numPage.get());
     }
 
     // see DbFile.java for javadocs
@@ -119,7 +124,7 @@ public class HeapFile implements DbFile {
         // some code goes here
         // not necessary for lab1
         ArrayList<Page> res = new ArrayList<Page>();
-        for (int i = 0; i < this.numPages(); i++) {
+        for (int i = 0; i < this.numPage.get(); i++) {
             HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(this.getId(), i),
                     Permissions.READ_WRITE);
             
@@ -131,8 +136,9 @@ public class HeapFile implements DbFile {
             }
         }
         // If thers is no slot empty, allocate new Page
-        this.numPage = this.numPages() + 1;
-        HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(this.getId(), this.numPage -1 ),
+        int pageNum = this.numPage.getAndIncrement();
+        //System.out.println("Total Page:" + pageNum);
+        HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(this.getId(), pageNum),
         Permissions.READ_WRITE);
         page.insertTuple(t);
         res.add(page);

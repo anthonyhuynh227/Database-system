@@ -22,14 +22,14 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class BufferPool {
 	private static class LockManager {
-		private static HashMap<PageId, TransactionId> exclusiveLocks;
-		private static HashMap<PageId, HashSet<TransactionId>> readLocks;
-		private static HashMap<TransactionId, HashSet<TransactionId>> waitList;
+		private static ConcurrentHashMap<PageId, TransactionId> exclusiveLocks;
+		private static ConcurrentHashMap<PageId, HashSet<TransactionId>> readLocks;
+		private static ConcurrentHashMap<TransactionId, HashSet<TransactionId>> waitList;
 		
 		public LockManager() {
-			exclusiveLocks = new HashMap<>();
-			readLocks = new HashMap<>();
-			waitList = new HashMap<>();
+			exclusiveLocks = new ConcurrentHashMap<>();
+			readLocks = new ConcurrentHashMap<>();
+			waitList = new ConcurrentHashMap<>();
 		}
 		
 		public synchronized boolean isDeadLock(TransactionId tid, PageId pid) {
@@ -78,16 +78,18 @@ public class BufferPool {
 		}
 		
 		public synchronized void releaseTransaction(TransactionId tid) {
-			for(PageId pid : exclusiveLocks.keySet()) {
-				if(exclusiveLocks.get(pid).equals(tid)) {
-					exclusiveLocks.remove(pid);
-				}
-			}
+            if (exclusiveLocks.size() > 0) {
+                for(PageId pid : exclusiveLocks.keySet()) {
+                    if(exclusiveLocks.get(pid) != null && exclusiveLocks.get(pid).equals(tid)) {
+                        exclusiveLocks.remove(pid);
+                    }
+                }
+            }
 			for(PageId pid : readLocks.keySet()) {
 				readLocks.get(pid).remove(tid);
 			}
 		}
-		
+        
 		public synchronized boolean getReadLock(PageId pid, TransactionId tid) throws TransactionAbortedException{
 			if(exclusiveLocks.containsKey(pid)) {
 				if(tid.equals(exclusiveLocks.get(pid))) {
@@ -100,7 +102,7 @@ public class BufferPool {
 					return true;
 				} else {
 					if(!addToWaitList(exclusiveLocks.get(pid), tid)) {
-						//throw new TransactionAbortedException();
+						throw new TransactionAbortedException();
 					}
 					return false;
 				}
@@ -135,7 +137,7 @@ public class BufferPool {
 							return true;
 						} else {
 							if(!addToWaitList(readLocks.get(pid).iterator().next(), tid)) {
-								//throw new TransactionAbortedException();
+								throw new TransactionAbortedException();
 							}
 							return false;
 						}
@@ -318,6 +320,7 @@ public class BufferPool {
     public void transactionComplete(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+        transactionComplete(tid, true);
     }
 
     /** Return true if the specified transaction has a lock on the specified page */
@@ -338,6 +341,27 @@ public class BufferPool {
         throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+        if (commit) {
+            // Flush all the dirty pages of this transaction to disk
+            flushPages(tid);
+        } else {
+            // Abort and restore the page of its disk state
+            for (PageId pid : setofPages.keySet()) {
+                if (setofPages.get(pid).isDirty() != null && setofPages.get(pid).isDirty().equals(tid)) {
+                    // Flush all pages to disk
+                    Page page = Database.getCatalog().idToFile.get(pid.getTableId()).readPage(pid);
+                    setofPages.put(pid, page);
+                    //deque.addLast(pid);
+                    // Mark not dirty
+                    setofPages.get(pid).markDirty(false, null);
+                }
+            }
+        }
+        lockManag.releaseTransaction(tid);
+
+        // Release any state of the BufferPool keeps regarding the transaction
+        // incluing releasing any locks that the transaction held
+
     }
 
     /**
@@ -431,6 +455,8 @@ public class BufferPool {
         // some code goes here
         // not necessary for lab1
     	this.setofPages.remove(pid);
+        // this.lockManag.exclusiveLocks.remove(pid);
+        // this.lockManag.readLocks.remove(pid);
     }
 
     /**
@@ -457,6 +483,15 @@ public class BufferPool {
     public synchronized  void flushPages(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+        // Iterate through all pages in BufferPoll, and chekc tid of each page equal to tid
+        for (PageId pid : setofPages.keySet()) {
+            if (setofPages.get(pid).isDirty() != null && setofPages.get(pid).isDirty().equals(tid)) {
+                // Flush all pages to disk
+                flushPage(pid);
+                // Mark not dirty
+                setofPages.get(pid).markDirty(false, null);
+            }
+        }
     }
 
     /**
