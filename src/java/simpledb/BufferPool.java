@@ -104,9 +104,9 @@ public class BufferPool {
 					}
 					return true;
 				} else {
-//	                if(!addToWaitList(exclusiveLocks.get(pid), tid)) {
-//	                    throw new TransactionAbortedException();
-//	                }
+	                if(!addToWaitList(exclusiveLocks.get(pid), tid)) {
+	                    //throw new TransactionAbortedException();
+	                }
 					return false;
 				}
 			} else {
@@ -131,7 +131,7 @@ public class BufferPool {
 			if(readLocks.containsKey(pid)) {			
 				HashSet<TransactionId> transactions = readLocks.get(pid);
 				if(transactions.size() != 0) {
-					if(transactions.contains(tid)) {
+					if(transactions.contains(tid) && transactions.size() == 1) {
 						if(isDeadLock(tid, pid)) {
 							throw new TransactionAbortedException();
 						}

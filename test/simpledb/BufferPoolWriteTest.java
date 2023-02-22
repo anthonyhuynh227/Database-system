@@ -38,15 +38,15 @@ public class BufferPoolWriteTest extends TestUtil.CreateHeapFile {
     			BufferedOutputStream bw = new BufferedOutputStream(new FileOutputStream(super.getFile(), true));
                 byte[] emptyData = HeapPage.createEmptyPageData();
                 bw.write(emptyData);
-				System.out.println("FILE size " + super.file.length());
+				//System.out.println("FILE size " + super.file.length());
                 bw.close();
-				System.out.println("HEAP PAGE" + super.numPages());
+				//System.out.println("HEAP PAGE" + super.numPages());
     			HeapPage p = new HeapPage(new HeapPageId(super.getId(), super.numPages() - 1), 
     					HeapPage.createEmptyPageData());
     	        p.insertTuple(t);
     			dirtypages.add(p);
     		}
-			System.out.println(dirtypages.size());
+			//System.out.println(dirtypages.size());
     		return dirtypages;
     	}
     }
