@@ -42,18 +42,21 @@ public class BufferPool {
 					}
 				}
 				TransactionId tidWithLock = exclusiveLocks.get(pid);
+				HashSet<TransactionId> waitingTransactions = new HashSet<>();
 				if(waitList.containsKey(tidWithLock)) {
-					HashSet<TransactionId> waitingTransactions = waitList.get(tidWithLock);
+					waitingTransactions = waitList.get(tidWithLock);
 					waitingTransactions.add(tid);
 				}
-				waitList.put(tidWithLock, new HashSet<TransactionId>());
+				waitList.put(tidWithLock, waitingTransactions);
 			}
 			return false;
 		}
 		
 		public synchronized boolean isWaiting(TransactionId mainTrans, TransactionId waitTrans) {
-			if(waitList.containsKey(mainTrans)&& waitList.get(mainTrans).contains(waitTrans)) {
-				return true;
+			if(waitList.containsKey(mainTrans)){
+				if(waitList.get(mainTrans).contains(waitTrans)) {
+					return true;
+				}
 			}
 			return false;
 		}
@@ -101,9 +104,9 @@ public class BufferPool {
 					}
 					return true;
 				} else {
-					if(!addToWaitList(exclusiveLocks.get(pid), tid)) {
-						throw new TransactionAbortedException();
-					}
+//	                if(!addToWaitList(exclusiveLocks.get(pid), tid)) {
+//	                    throw new TransactionAbortedException();
+//	                }
 					return false;
 				}
 			} else {
@@ -119,51 +122,44 @@ public class BufferPool {
 		
 		public synchronized boolean getExclusiveLock(PageId pid, TransactionId tid) throws TransactionAbortedException{
 			if(exclusiveLocks.containsKey(pid) && !exclusiveLocks.get(pid).equals(tid)) {
-				if(addToWaitList(exclusiveLocks.get(pid), tid)) {
+				if(!addToWaitList(exclusiveLocks.get(pid), tid)) {
 					throw new TransactionAbortedException();
 				}
 				return false;
 			}
 			
-			if(readLocks.containsKey(pid)) {
+			if(readLocks.containsKey(pid)) {			
 				HashSet<TransactionId> transactions = readLocks.get(pid);
 				if(transactions.size() != 0) {
-					if(transactions.size() == 1) {
-						if(transactions.contains(tid)) {
-							if(isDeadLock(tid, pid)) {
-								throw new TransactionAbortedException();
-							}
-							exclusiveLocks.put(pid, tid);
-							return true;
-						} else {
-							if(!addToWaitList(readLocks.get(pid).iterator().next(), tid)) {
-								throw new TransactionAbortedException();
-							}
-							return false;
+					if(transactions.contains(tid)) {
+						if(isDeadLock(tid, pid)) {
+							throw new TransactionAbortedException();
 						}
-					} else {
-						Iterator<TransactionId> tidIter = readLocks.get(pid).iterator();
-						while(tidIter.hasNext()) {
-							if(!addToWaitList(tidIter.next(), tid)) {
-								throw new TransactionAbortedException();
-							}
-						}
-						return false;
-					}
+	                    exclusiveLocks.put(pid, tid);
+	                    return true;
+	                    } else {
+	                    	Iterator<TransactionId> iter = readLocks.get(pid).iterator();
+		                    while(iter.hasNext()) {
+		                    	TransactionId tid2 = iter.next();
+		                        if(!addToWaitList(tid2, tid) && isWaiting(tid, tid2)) {
+		                            throw new TransactionAbortedException();
+		                        }
+		                    }
+		                    return false;
+	                    }
 				} else {
 					if(isDeadLock(tid, pid)) {
-						throw new TransactionAbortedException();
+                        throw new TransactionAbortedException();
 					}
 					exclusiveLocks.put(pid, tid);
 					return true;
 				}
 			} else {
 				if(isDeadLock(tid, pid)) {
-					throw new TransactionAbortedException();
+                    throw new TransactionAbortedException();
 				}
 				exclusiveLocks.put(pid, tid);
 				return true;
-				
 			}
 		}
 		
