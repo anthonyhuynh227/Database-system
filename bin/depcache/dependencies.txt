@@ -809,11 +809,11 @@ simpledb.DbException
 simpledb.HeapPageId
 simpledb.HeapFile
 java.io.FileOutputStream
-java.io.IOException
 simpledb.HeapPage
-simpledb.TransactionAbortedException
+java.io.IOException
 java.util.ArrayList
 java.io.BufferedOutputStream
+simpledb.TransactionAbortedException
 ||:simpledb.TupleComparator
 simpledb.Tuple
 simpledb.TupleComparator
