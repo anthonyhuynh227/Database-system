@@ -135,6 +135,7 @@ public class LogTest extends SimpleDbTestBase {
         doInsert(hf1, 1, 2);
 
         if(Database.getLogFile().getTotalRecords() != 4)
+        //System.out.println(Database.getLogFile().getTotalRecords() + "NUMBER OF RECORDS");
             throw new RuntimeException("LogTest: wrong # of log records; patch failed?");
 
         // *** Test:

@@ -339,7 +339,24 @@ public class BufferPool {
         // not necessary for lab1|lab2
         if (commit) {
             // Flush all the dirty pages of this transaction to disk
-            flushPages(tid);
+            //flushPages(tid);
+            for (PageId pid : setofPages.keySet()) {
+                if (setofPages.get(pid).isDirty() != null && setofPages.get(pid).isDirty().equals(tid)) {
+                    // Flush all pages to disk
+                    //flushPage(pid);
+                    // Write log for this page
+                    if (tid != null && Database.getLogFile().tidToFirstLogRecord.containsKey(tid.getId()) ){
+                        HeapPage page = (HeapPage) setofPages.get(pid);
+                        Database.getLogFile().logWrite(tid, page.getBeforeImage(), page);
+                        Database.getLogFile().force();
+                        // Mark not dirty
+                        setofPages.get(pid).markDirty(false, null);
+                        page.setBeforeImage();
+                    }
+                }
+            }
+            Database.getLogFile().logCommit(tid);
+
         } else {
             // Abort and restore the page of its disk state
             for (PageId pid : setofPages.keySet()) {
@@ -352,6 +369,7 @@ public class BufferPool {
                     setofPages.get(pid).markDirty(false, null);
                 }
             }
+            Database.getLogFile().logAbort(tid);
         }
         lockManag.releaseTransaction(tid);
 
@@ -469,6 +487,12 @@ public class BufferPool {
             throw new IOException("The page is not in Buffer Pool");
         }
 
+        TransactionId dirtier = page.isDirty();
+        if (dirtier != null && Database.getLogFile().tidToFirstLogRecord.containsKey(dirtier.getId()) ){
+            Database.getLogFile().logWrite(dirtier, page.getBeforeImage(), page);
+            Database.getLogFile().force();
+        }
+
         // write this page to disk
         Database.getCatalog().idToFile.get(pid.getTableId()).writePage(page);
 
@@ -501,12 +525,12 @@ public class BufferPool {
         while (iter.hasNext()) {
             PageId pageId = iter.next();
             // Get the first not dirty page
-            if (setofPages.get(pageId).isDirty() == null) {
+            //if (setofPages.get(pageId).isDirty() == null) {
                 deque.remove(pageId);
                 // remove from the Hash
                 setofPages.remove(pageId);
                 break;
-            }    
+            //}    
         }
         if (setofPages.size() >= this.capacity) {
             throw new DbException("Buffer Pool is full and can't be evict");
