@@ -1,0 +1,14 @@
+Feedback for: phuynh08
+--------------------------------------------------------------
+Total Score (%): 99
+Unit Test Score (out of 15): 15
+System Test Score (out of 6): 6
+Code Score (out of 10): 9
+Writeup Score (out of 10): 10
+--------------------------------------------------------------
+Code feedback: 
+(-1) Great work with the code desgin, but try to put more comments on newly intoduced LockManager class to explain complicated code blocks
+(-0) In HeapFile::insertTuple when you iterate every page in the file, you acquire a write lock on that page; if the page doesn't have any free slots, you could consider invoking releasePage to improve transaction parallelization since you will not write anything on that page. 
+
+Writeup feedback:
+Nice job explaining the lab and your design choices in detail!
