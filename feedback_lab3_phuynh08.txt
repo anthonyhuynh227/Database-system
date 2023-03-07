@@ -1,8 +1,8 @@
 Feedback for: phuynh08
 --------------------------------------------------------------
 Total Score (%): 99
-Unit Test Score (out of 32): 15
-System Test Score (out of 4): 6
+Unit Test Score (out of 15): 15
+System Test Score (out of 6): 6
 Code Score (out of 10): 9
 Writeup Score (out of 10): 10
 --------------------------------------------------------------
