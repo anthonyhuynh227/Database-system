@@ -133,9 +133,8 @@ public class LogTest extends SimpleDbTestBase {
         // *** Test:
         // check that BufferPool.flushPage() calls LogFile.logWrite().
         doInsert(hf1, 1, 2);
-
+        System.out.println(Database.getLogFile().getTotalRecords());
         if(Database.getLogFile().getTotalRecords() != 4)
-        //System.out.println(Database.getLogFile().getTotalRecords() + "NUMBER OF RECORDS");
             throw new RuntimeException("LogTest: wrong # of log records; patch failed?");
 
         // *** Test:
