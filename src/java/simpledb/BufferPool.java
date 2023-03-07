@@ -355,7 +355,6 @@ public class BufferPool {
                     }
                 }
             }
-            Database.getLogFile().logCommit(tid);
 
         } else {
             // Abort and restore the page of its disk state
@@ -369,7 +368,6 @@ public class BufferPool {
                     setofPages.get(pid).markDirty(false, null);
                 }
             }
-            Database.getLogFile().logAbort(tid);
         }
         lockManag.releaseTransaction(tid);
 
