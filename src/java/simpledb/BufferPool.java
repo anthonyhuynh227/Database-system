@@ -355,7 +355,7 @@ public class BufferPool {
                     }
                 }
             }
-            Database.getLogFile().logCommit(tid);
+            //Database.getLogFile().logCommit(tid);
 
         } else {
             // Abort and restore the page of its disk state

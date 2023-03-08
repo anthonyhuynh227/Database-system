@@ -466,7 +466,62 @@ public class LogFile {
         synchronized (Database.getBufferPool()) {
             synchronized(this) {
                 preAppend();
-                // some code goes here
+                Long start = tidToFirstLogRecord.get(tid.getId());
+                if(start == null) { // Transaction committed
+                	return;
+                }
+                raf.seek(start);
+                HashMap<PageId, Page> rollbackPages = new HashMap<>();
+                boolean abortedTrans = false;
+                while(!abortedTrans) {
+                	try {
+                    	int transType = raf.readInt();
+                    	long recordId = raf.readLong();
+                    	switch(transType) {
+                    	case BEGIN_RECORD:
+                    		break;
+                    	case COMMIT_RECORD:
+                    		if(recordId == tid.getId()) {
+                    			throw new RuntimeException("Transaction comitted");
+                    		}
+                    		break;
+                    	case ABORT_RECORD:
+                    		if(recordId == tid.getId()) {
+                    			abortedTrans = true;
+                    		}
+                    		break;
+                    	case UPDATE_RECORD:
+                    		Page before = readPageData(raf);
+                    		Page after = readPageData(raf);
+                    		
+                    		if(recordId == tid.getId() && !rollbackPages.containsKey(before.getId())) {
+                    			rollbackPages.put(before.getId(), before);
+                    		}
+                    		break;
+                    	case CHECKPOINT_RECORD:
+                    		int numActions = raf.readInt();
+                    		while(numActions-- > 0) {
+                    			raf.readLong();
+                    			raf.readLong();
+                    		}
+                    		break;
+                    	}
+                    	raf.readLong();
+                		
+                	} catch (IOException e) {
+                		break;
+                	}
+                }
+                Iterator<HashMap.Entry<PageId, Page>> iter = rollbackPages.entrySet().iterator();
+                while(iter.hasNext()) {
+                	HashMap.Entry<PageId, Page> pageEntry = iter.next();
+                	PageId pid = pageEntry.getKey();
+                	Page pageBefore = pageEntry.getValue();
+                	int tableId = pid.getTableId();
+                	
+                	Database.getBufferPool().discardPage(pid);
+                	Database.getCatalog().getDatabaseFile(tableId).writePage(pageBefore);
+                }
             }
         }
     }
