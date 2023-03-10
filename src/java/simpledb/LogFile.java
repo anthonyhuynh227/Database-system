@@ -549,6 +549,82 @@ public class LogFile {
             synchronized (this) {
                 recoveryUndecided = false;
                 // some code goes here
+       		raf.seek(0);
+        	long ckLog = raf.readLong();
+        	tidToFirstLogRecord.clear();
+		// Restore the tidToFirstLogRecord from the checkpoint
+        	if (ckLog != -1) {
+          	    raf.seek(ckLog);
+          	    int checkpoint_type = raf.readInt();
+          	    raf.readLong();
+          	    if (checkpoint_type != CHECKPOINT_RECORD) {
+            		throw new RuntimeException(
+			"checkpoint pointer does not point to checkpoint record");
+          	    }
+
+           	    int numActions = raf.readInt();
+          	    while (numActions-- > 0) {
+            	        long id = raf.readLong();
+                        long offset = raf.readLong();
+            	        tidToFirstLogRecord.put(id, offset);
+          	    }
+          	    raf.readLong();
+        	}
+        	while (true) {
+          	    try {
+            		long cur_offset = raf.getFilePointer();
+            		int type = raf.readInt();
+            		long record_tid = raf.readLong();
+
+            		switch (type) {
+            		case CHECKPOINT_RECORD:
+              			throw new RuntimeException("inconsistent log");
+            		case BEGIN_RECORD:
+              		    if (tidToFirstLogRecord.containsKey(record_tid)) {
+                		throw new RuntimeException("duplicate BEGIN");
+              		    }
+              		    tidToFirstLogRecord.put(record_tid, cur_offset);
+              		    break;
+            		case ABORT_RECORD:
+              		    long offset = raf.getFilePointer();
+              		    rollback(new TransactionId(record_tid));
+              		    raf.seek(offset);
+              		    tidToFirstLogRecord.remove(record_tid);
+              		    break;
+            		case COMMIT_RECORD:
+              		    if (!tidToFirstLogRecord.containsKey(record_tid)) {
+                		throw new RuntimeException("inconsistent log");
+              		    }
+              		    tidToFirstLogRecord.remove(record_tid);
+              		    break;
+            		case UPDATE_RECORD:
+              		    if (!tidToFirstLogRecord.containsKey(record_tid)) {
+                		throw new RuntimeException("inconsistent log");
+              		    }
+              		    Page before = readPageData(raf);
+              		    Page after = readPageData(raf);
+               		    int tableid = after.getId().getTableId();
+              		    Database.getCatalog().getDatabaseFile(tableid).writePage(after);
+              		    break;
+            		default:
+              		    assert false;
+            		}
+
+            		raf.readLong();
+          	    } catch (EOFException e) {
+            		break;
+          	    }
+        	}
+
+        	// Rollback all the incomplete transaction left in the tidToFirstLogRecord
+        	ArrayList<Long> tranIds = new ArrayList<Long>();
+        	for (long id : tidToFirstLogRecord.keySet()) {
+          	    tranIds.add(id);
+        	}
+        	for (long id : tranIds) {
+          	    logAbort(new TransactionId(id));
+          	    rollback(new TransactionId(id));
+        	}
             }
          }
     }
